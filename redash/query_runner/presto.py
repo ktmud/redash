@@ -47,8 +47,12 @@ class Presto(BaseQueryRunner):
                 'port': {
                     'type': 'number'
                 },
-                'schema': {
+                'default_schema': {
                     'type': 'string'
+                },
+                'table_filter': {
+                    'type': 'string',
+                    'default': 'RegExp to filter schema.tables'
                 },
                 'catalog': {
                     'type': 'string'
@@ -60,7 +64,8 @@ class Presto(BaseQueryRunner):
                     'type': 'string'
                 },
             },
-            'order': ['host', 'protocol', 'port', 'username', 'password', 'schema', 'catalog'],
+            'order': ['host', 'protocol', 'port', 'username', 'password',
+                      'default_schema', 'table_filter', 'catalog'],
             'required': ['host']
         }
 
@@ -75,10 +80,15 @@ class Presto(BaseQueryRunner):
     def get_schema(self, get_stats=False):
         schema = {}
         query = """
-        SELECT table_schema, table_name, column_name
-        FROM information_schema.columns
-        WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
-        """
+        SELECT
+            table_schem, table_name, column_name
+        FROM system.jdbc.columns
+        WHERE table_cat = '{catalog}'
+            AND regexp_like(concat(table_schem, '.', table_name), '{table_filter}')
+        """.format(
+            catalog=self.configuration.get('catalog', 'hive'),
+            table_filter=self.configuration.get('table_filter', ''),
+        )
 
         results, error = self.run_query(query, None)
 
@@ -88,7 +98,7 @@ class Presto(BaseQueryRunner):
         results = json_loads(results)
 
         for row in results['rows']:
-            table_name = '{}.{}'.format(row['table_schema'], row['table_name'])
+            table_name = '{}.{}'.format(row['table_schem'], row['table_name'])
 
             if table_name not in schema:
                 schema[table_name] = {'name': table_name, 'columns': []}
