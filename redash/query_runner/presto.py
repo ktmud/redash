@@ -1,8 +1,11 @@
+import re
+import logging
+
 from collections import defaultdict
 from redash.query_runner import *
 from redash.utils import json_dumps, json_loads
 
-import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -50,9 +53,13 @@ class Presto(BaseQueryRunner):
                 'default_schema': {
                     'type': 'string'
                 },
+                'schema_filter': {
+                    'type': 'string',
+                    'default': 'RegExp to filter schema name'
+                },
                 'table_filter': {
                     'type': 'string',
-                    'default': 'RegExp to filter schema.tables'
+                    'default': 'RegExp to filter schema.table'
                 },
                 'catalog': {
                     'type': 'string'
@@ -73,7 +80,8 @@ class Presto(BaseQueryRunner):
                 }
             },
             'order': ['host', 'protocol', 'port', 'username', 'password',
-                      'default_schema', 'table_filter', 'catalog', 'extras'],
+                      'default_schema', 'schema_filter', 'table_filter',
+                      'catalog', 'extras'],
             'required': ['host']
         }
 
@@ -85,33 +93,40 @@ class Presto(BaseQueryRunner):
     def type(cls):
         return "presto"
 
-    def get_schema(self, get_stats=False):
-        schema = {}
-        query = """
-        SELECT
-            table_schem, table_name, column_name
-        FROM system.jdbc.columns
-        WHERE table_cat = '{catalog}'
-            AND regexp_like(concat(table_schem, '.', table_name), '{table_filter}')
-        """.format(
-            catalog=self.configuration.get('catalog', 'hive'),
-            table_filter=self.configuration.get('table_filter', ''),
-        )
-
+    def get_rows(self, query, colnames):
+        """Return query results as a list of tuples"""
         results, error = self.run_query(query, None)
-
+        # Skip null StorageFormat error
+        if error == 'outputFormat should not be accessed from a null StorageFormat':
+            return []
         if error is not None:
             raise Exception("Failed getting schema.")
-
         results = json_loads(results)
+        return [tuple(row[col] for col in colnames) for row in results["rows"]]
 
-        for row in results['rows']:
-            table_name = '{}.{}'.format(row['table_schem'], row['table_name'])
+    def get_schema(self, get_stats=False):
+        schema = {}
+        catalog = self.configuration.get('catalog', 'hive')
+        table_filter = self.configuration.get('table_filter', '')
+        schema_filter = re.compile(self.configuration.get('schema_filter', ''))
 
-            if table_name not in schema:
-                schema[table_name] = {'name': table_name, 'columns': []}
+        for (schem, ) in self.get_rows("SHOW SCHEMAS", ["Schema"]):
+            if not schema_filter.match(schem):
+                continue
+            query = """
+                SELECT
+                    table_name, column_name
+                FROM system.jdbc.columns
+                WHERE table_cat = '{catalog}'
+                    AND regexp_like(concat(table_schem, '.', table_name), '{table_filter}')
+                    AND table_schem = '{schem}'
+            """.format(catalog=catalog, schem=schem, table_filter=table_filter)
 
-            schema[table_name]['columns'].append(row['column_name'])
+            for (tbl, col) in self.get_rows(query, ("table_name", "column_name")):
+                table_name = '{}.{}'.format(schem, tbl)
+                if table_name not in schema:
+                    schema[table_name] = {'name': table_name, 'columns': []}
+                schema[table_name]['columns'].append(col)
 
         return schema.values()
 
