@@ -1,3 +1,5 @@
+import { getQueryDataUrl } from './index';
+
 const ApiKeyDialog = {
   template: `<div class="modal-header">
     <button type="button" class="close" aria-label="Close" ng-click="$ctrl.close()"><span aria-hidden="true">&times;</span></button>
@@ -29,8 +31,8 @@ const ApiKeyDialog = {
     this.canEdit = currentUser.id === this.resolve.query.user.id || currentUser.hasPermission('admin');
     this.disableRegenerateApiKeyButton = false;
     this.query = this.resolve.query;
-    this.csvUrlBase = `${clientConfig.basePath}api/queries/${this.resolve.query.id}/results.csv?api_key=`;
-    this.jsonUrlBase = `${clientConfig.basePath}api/queries/${this.resolve.query.id}/results.json?api_key=`;
+    this.csvUrlBase = getQueryDataUrl(this.resolve.query.id, 'csv');
+    this.jsonUrlBase = getQueryDataUrl(this.resolve.query.id, 'json');
 
     this.regenerateQueryApiKey = () => {
       this.disableRegenerateApiKeyButton = true;

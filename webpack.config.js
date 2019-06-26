@@ -10,6 +10,7 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 const LessPluginAutoPrefix = require("less-plugin-autoprefix");
 const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
   .BundleAnalyzerPlugin;
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 const path = require("path");
 
@@ -19,6 +20,7 @@ const redashBackend = process.env.REDASH_BACKEND || "http://localhost:5000";
 
 const basePath = path.join(__dirname, "client");
 const appPath = path.join(__dirname, "client", "app");
+// const monacoPath = path.resolve(__dirname, './node_modules/monaco-editor');
 
 const extensionsRelativePath = process.env.EXTENSIONS_DIRECTORY ||
   path.join("client", "app", "extensions");
@@ -32,7 +34,7 @@ const config = {
       "./client/app/assets/less/main.less",
       "./client/app/assets/less/ant.less"
     ],
-    server: ["./client/app/assets/less/server.less"]
+    server: ["./client/app/assets/less/server.less"],
   },
   output: {
     path: path.join(basePath, "./dist"),
@@ -44,10 +46,15 @@ const config = {
     extensions: ['.js', '.jsx'],
     alias: {
       "@": appPath,
-      "extensions": extensionPath
+      "extensions": extensionPath,
+      // 'vs': path.join(__dirname, './node_modules/monaco-editor/esm/vs'),
+      // 'vs/language/yaml': path.join(__dirname, 'node_modules/monaco-yaml/devdev'),
     },
   },
   plugins: [
+    new MonacoWebpackPlugin({
+      languages: ['json', 'yaml']
+    }),
     new WebpackBuildNotifierPlugin({ title: "Redash" }),
     // Enforce angular to use jQuery instead of jqLite
     new webpack.ProvidePlugin({ "window.jQuery": "jquery" }),

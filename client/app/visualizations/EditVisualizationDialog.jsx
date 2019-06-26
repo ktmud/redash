@@ -94,6 +94,8 @@ function EditVisualizationDialog({ dialog, visualization, query, queryResult }) 
 
   const [saveInProgress, setSaveInProgress] = useState(false);
 
+  const { Renderer, Editor } = registeredVisualizations[type];
+
   function onTypeChanged(newType) {
     setType(newType);
 
@@ -128,8 +130,6 @@ function EditVisualizationDialog({ dialog, visualization, query, queryResult }) 
     const optionsChanged = !isEqual(cleanAngularProps(options), defaultState.originalOptions);
     confirmDialogClose(nameChanged || optionsChanged).then(dialog.dismiss);
   }
-
-  const { Renderer, Editor } = registeredVisualizations[type];
 
   return (
     <Modal
@@ -177,6 +177,8 @@ function EditVisualizationDialog({ dialog, visualization, query, queryResult }) 
             <Editor
               data={data}
               options={options}
+              query={query}
+              visualization={visualization}
               visualizationName={name}
               onOptionsChange={onOptionsChanged}
             />
@@ -189,8 +191,11 @@ function EditVisualizationDialog({ dialog, visualization, query, queryResult }) 
             <Renderer
               data={filteredData}
               options={options}
+              query={query}
+              visualization={visualization}
               visualizationName={name}
               onOptionsChange={onOptionsChanged}
+              fromEditor
             />
           </div>
         </Grid.Col>
