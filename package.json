@@ -95,7 +95,7 @@
     "ui-select": "^0.19.8",
     "underscore.string": "^3.3.4",
     "vega": "^5.4.0",
-    "vega-lite": "^2.7.0",
+    "vega-lite": "^3.0.0",
     "vega-themes": "^2.3.0",
     "vega-tooltip": "^0.17.0"
   },
