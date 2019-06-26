@@ -115,7 +115,7 @@ export class Parameter {
       }
 
       if (isArray(value) && (value.length === 2)) {
-        value = [moment(value[0]), moment(value[1])];
+        value = [moment(value[0], 'YYYY-MM-DD'), moment(value[1], 'YYYY-MM-DD')];
         if (value[0].isValid() && value[1].isValid()) {
           this.value = {
             start: value[0].format(DATETIME_FORMATS[this.type]),

@@ -20,6 +20,9 @@ export const VisualizationType = PropTypes.shape({
 
 // For each visualization's renderer
 export const RendererPropTypes = {
+  fromEditor: PropTypes.bool,
+  query: PropTypes.object.isRequired,
+  visualization: PropTypes.object,
   visualizationName: PropTypes.string,
   data: Data.isRequired,
   options: VisualizationOptions.isRequired,
@@ -28,6 +31,8 @@ export const RendererPropTypes = {
 
 // For each visualization's editor
 export const EditorPropTypes = {
+  query: PropTypes.object.isRequired,
+  visualization: PropTypes.object,
   visualizationName: PropTypes.string,
   data: Data.isRequired,
   options: VisualizationOptions.isRequired,
@@ -46,6 +51,7 @@ const VisualizationConfig = PropTypes.shape({
   getOptions: PropTypes.func.isRequired, // (existingOptions: object, data: { columns[], rows[] }) => object
   isDefault: PropTypes.bool,
   isDeprecated: PropTypes.bool,
+  isDefault: PropTypes.bool,
   Renderer: PropTypes.func.isRequired,
   Editor: PropTypes.func,
 
@@ -90,7 +96,9 @@ export function getDefaultVisualization() {
 }
 
 export function newVisualization(type = null, options = {}) {
-  const visualization = type ? registeredVisualizations[type] : getDefaultVisualization();
+  const visualization = type
+    ? registeredVisualizations[type]
+    : getDefaultVisualization();
   return {
     type: visualization.type,
     name: visualization.name,

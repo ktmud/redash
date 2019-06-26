@@ -1,0 +1,32 @@
+
+@redash-gray: rgba(102, 136, 153, 1);
+
+.vega-help-link() {
+  &, &:visited {
+    color: @redash-gray;
+  }
+  &:hover {
+    color: darken(@redash-gray, 20%);
+  }
+}
+
+.vega-spec-editor {
+  .ant-select {
+    margin-right: 10px;
+  }
+  .vega-help-link {
+    float: right;
+    .vega-help-link();
+  }
+}
+
+.vega-canvas-container {
+  text-align: center;
+}
+.vega-external-link {
+  text-align: center;
+  margin-top: 10px;
+  a {
+    .vega-help-link();
+  }
+}
