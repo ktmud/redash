@@ -175,10 +175,9 @@ function EditVisualizationDialog({ dialog, visualization, query, queryResult }) 
           </div>
           <div data-test="VisualizationEditor">
             <Editor
+              query={query}
               data={data}
               options={options}
-              query={query}
-              visualization={visualization}
               visualizationName={name}
               onOptionsChange={onOptionsChanged}
             />
@@ -189,13 +188,11 @@ function EditVisualizationDialog({ dialog, visualization, query, queryResult }) 
           <Filters filters={filters} onChange={setFilters} />
           <div className="scrollbox" data-test="VisualizationPreview">
             <Renderer
+              fromEditor
               data={filteredData}
               options={options}
-              query={query}
-              visualization={visualization}
               visualizationName={name}
               onOptionsChange={onOptionsChanged}
-              fromEditor
             />
           </div>
         </Grid.Col>
@@ -205,14 +202,19 @@ function EditVisualizationDialog({ dialog, visualization, query, queryResult }) 
 }
 
 EditVisualizationDialog.propTypes = {
-  dialog: DialogPropType.isRequired,
-  query: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
   visualization: VisualizationType,
+  query: PropTypes.shape({
+    id: PropTypes.number,
+    apiKey: PropTypes.string,
+    name: PropTypes.string,
+  }),
+  dialog: DialogPropType.isRequired,
   queryResult: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
 };
 
 EditVisualizationDialog.defaultProps = {
   visualization: null,
+  query: {},
 };
 
 export default wrapDialog(EditVisualizationDialog);

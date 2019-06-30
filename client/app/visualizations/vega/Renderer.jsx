@@ -10,7 +10,7 @@ import { RendererPropTypes } from '../index';
 import { Mode, NAMES } from './consts';
 
 import './vega.less';
-import { parseSpecText, yaml2json } from './helpers';
+import { parseSpecText, yaml2json, applyTheme } from './helpers';
 
 /**
  * Parse Vega spec in props based on chosen language and
@@ -18,7 +18,7 @@ import { parseSpecText, yaml2json } from './helpers';
  *
  * @param {object} props properties passed from React
  */
-function parseProps({ lang, mode, spec }, data) {
+function parseProps({ lang, mode, spec, theme }, data) {
   let error = null;
 
   // if empty spec
@@ -29,6 +29,10 @@ function parseProps({ lang, mode, spec }, data) {
   const parsed = parseSpecText({ spec, lang, mode });
   error = parsed.error;
   spec = parsed.spec; // if error, spec will be default spec
+
+  // In case we updated theme in the JavaScript module,
+  // but the stored spec still has the old theme
+  applyTheme(spec, theme);
 
   if (error) {
     return { error, mode, spec, data: [] };
@@ -95,14 +99,14 @@ export default class VegaRenderer extends React.Component {
       const updateVegaUrl = (e) => {
         let specText = options.spec;
         if (options.lang === 'yaml') {
-          specText = yaml2json(spec, mode);
+          specText = yaml2json(specText, mode).specText;
         }
         const compressed = LZString.compressToEncodedURIComponent(specText);
         e.target.href = `${vegaEditorBase}#/url/${mode}/${compressed}`;
       };
       editLink = (
         <div className="vega-external-link">
-          <a href={vegaUrl} target="_blank" rel="noopener noreferrer" onMouseEnter={updateVegaUrl}>
+          <a href={vegaUrl} target="_blank" rel="noopener noreferrer" onClick={updateVegaUrl}>
             <Icon type="edit" /> Edit in Official Vega Editor
           </a>
         </div>

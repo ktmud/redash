@@ -21,7 +21,6 @@ export const VisualizationType = PropTypes.shape({
 // For each visualization's renderer
 export const RendererPropTypes = {
   fromEditor: PropTypes.bool,
-  query: PropTypes.object.isRequired,
   visualization: PropTypes.object,
   visualizationName: PropTypes.string,
   data: Data.isRequired,
@@ -31,7 +30,6 @@ export const RendererPropTypes = {
 
 // For each visualization's editor
 export const EditorPropTypes = {
-  query: PropTypes.object.isRequired,
   visualization: PropTypes.object,
   visualizationName: PropTypes.string,
   data: Data.isRequired,
@@ -51,7 +49,6 @@ const VisualizationConfig = PropTypes.shape({
   getOptions: PropTypes.func.isRequired, // (existingOptions: object, data: { columns[], rows[] }) => object
   isDefault: PropTypes.bool,
   isDeprecated: PropTypes.bool,
-  isDefault: PropTypes.bool,
   Renderer: PropTypes.func.isRequired,
   Editor: PropTypes.func,
 

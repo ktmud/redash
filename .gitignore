@@ -26,3 +26,5 @@ npm-debug.log
 
 client/cypress/screenshots
 client/cypress/videos
+
+client/app/assets/less/**/*.css

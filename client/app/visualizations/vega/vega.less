@@ -1,5 +1,4 @@
-
-@redash-gray: rgba(102, 136, 153, 1);
+@import '../../assets/less/inc/ant-variables';
 
 .vega-help-link() {
   &, &:visited {
@@ -29,4 +28,8 @@
   a {
     .vega-help-link();
   }
+}
+
+#vg-tooltip-element {
+  z-index: 2000;
 }

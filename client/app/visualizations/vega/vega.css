@@ -22,3 +22,33 @@
 /* --------------------------------------------------------
     Notification
 -----------------------------------------------------------*/
+.vega-spec-editor .ant-select {
+  margin-right: 10px;
+}
+.vega-spec-editor .vega-help-link {
+  float: right;
+}
+.vega-spec-editor .vega-help-link,
+.vega-spec-editor .vega-help-link:visited {
+  color: #668899;
+}
+.vega-spec-editor .vega-help-link:hover {
+  color: #3d525c;
+}
+.vega-canvas-container {
+  text-align: center;
+}
+.vega-external-link {
+  text-align: center;
+  margin-top: 10px;
+}
+.vega-external-link a,
+.vega-external-link a:visited {
+  color: #668899;
+}
+.vega-external-link a:hover {
+  color: #3d525c;
+}
+#vg-tooltip-element {
+  z-index: 2000;
+}

@@ -3,10 +3,60 @@
  */
 const markColor = '#ab5787';
 const axisColor = '#979797';
+const titleColor = '#666666';
 
-const redashTheme = {
-  background: '#f9f9f9',
+// Borrowed from https://carto.com/carto-colors/
+const CartoColors = {
+  Prism: [
+    '#5F4690',
+    '#1D6996',
+    '#38A6A5',
+    '#0F8554',
+    '#73AF48',
+    '#EDAD08',
+    '#E17C05',
+    '#CC503E',
+    '#94346E',
+    '#6F4070',
+    '#994E95',
+    '#666666',
+  ],
+  Bold: [
+    '#7F3C8D',
+    '#11A579',
+    '#3969AC',
+    '#F2B701',
+    '#E73F74',
+    '#80BA5A',
+    '#E68310',
+    '#008695',
+    '#CF1C90',
+    '#f97b72',
+    '#4b4b8f',
+    '#A5AA99',
+  ],
+  Pastel: [
+    '#66C5CC',
+    '#F6CF71',
+    '#F89C74',
+    '#DCB0F2',
+    '#87C55F',
+    '#9EB9F3',
+    '#FE88B1',
+    '#C9DB74',
+    '#8BE0A4',
+    '#B497E7',
+    '#D3B484',
+    '#B3B3B3',
+  ],
+};
 
+const redashThemeBase = {
+  background: '#ffffff',
+
+  group: {
+    fill: '#e5e5e5',
+  },
   arc: { fill: markColor },
   area: { fill: markColor },
   line: { stroke: markColor },
@@ -16,28 +66,21 @@ const redashTheme = {
   symbol: { fill: markColor, size: 30 },
 
   axis: {
-    domainColor: axisColor,
-    domainWidth: 0.5,
+    domain: false,
+    grid: true,
     gridWidth: 0.2,
     labelColor: axisColor,
     tickColor: axisColor,
     tickWidth: 0.2,
-    titleColor: axisColor,
-  },
-
-  axisBand: {
-    grid: false,
-  },
-
-  axisX: {
-    grid: true,
-    tickSize: 10,
+    tickSize: 6,
+    titleColor,
+    titleFontSize: 12,
+    titleFontWeight: 'normal',
   },
 
   axisY: {
-    domain: false,
-    grid: true,
     tickSize: 0,
+    labelPadding: 4,
   },
 
   legend: {
@@ -47,20 +90,15 @@ const redashTheme = {
     symbolType: 'square',
   },
 
-  range: {
-    category: [
-      '#ab5787',
-      '#51b2e5',
-      '#703c5c',
-      '#168dd9',
-      '#d190b6',
-      '#00609f',
-      '#d365ba',
-      '#154866',
-      '#666666',
-      '#c4c4c4',
-    ],
+  view: {
+    stroke: 'transparent',
   },
+
+};
+const redashThemes = {
+  bold: { ...redashThemeBase, range: { category: CartoColors.Bold } },
+  prism: { ...redashThemeBase, range: { category: CartoColors.Prism } },
+  pastel: { ...redashThemeBase, range: { category: CartoColors.Pastel } },
 };
 
-export default redashTheme;
+export default redashThemes;

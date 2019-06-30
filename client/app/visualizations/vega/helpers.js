@@ -9,7 +9,7 @@ import { clientConfig } from '@/services/auth';
 import { message } from 'antd';
 
 import { Mode, VEGA_LITE_START_SPEC, DEFAULT_SPECS } from './consts';
-import redashTheme from './theme';
+import redashThemes from './theme';
 
 function convertDateFormat(momentFormat) {
   return momentFormat
@@ -27,7 +27,7 @@ function convertDateFormat(momentFormat) {
  */
 export function renderInitialSpecText(options, { data, query }) {
   let x = null;
-  let y = null;
+  const yFields = [];
   const { spec: specText, lang, mode, theme, origLang, origMode } = options;
   let spec = specText;
   // if spec is not empty, do nothing
@@ -35,21 +35,21 @@ export function renderInitialSpecText(options, { data, query }) {
     // infer xy fields based on data types
     if (data && data.columns && data.columns.length > 0) {
       data.columns.forEach((col) => {
-        // default schema has "date" and "count" field
+        // default Vega schema expects "date" and "count" field
         if (x === null && col.type === 'date') {
           x = col;
-        } else if (y === null && ['float', 'integer', 'number'].includes(col.type)) {
-          y = col;
+        } else if (['float', 'integer', 'number'].includes(col.type)) {
+          yFields.push(col.name);
         }
       });
     }
     const dateFormat = convertDateFormat(clientConfig.dateFormat || 'YYYY-MM-DD');
     const params = {
       x,
-      y,
+      yFields: stringify(yFields),
       query,
       dateFormat,
-      dataUrl: getQueryDataUrl(query.id, 'csv', query.api_key) + '&download=false',
+      dataUrl: getQueryDataUrl(query.id, 'csv', query.api_key, false),
     };
     // render as Vega-lite JSON first
     spec = Mustache.render(VEGA_LITE_START_SPEC, params);
@@ -74,10 +74,14 @@ export function renderInitialSpecText(options, { data, query }) {
 }
 
 export function dumpSpecText(spec, lang) {
-  if (lang === 'yaml') {
-    return YAML.safeDump(spec);
+  try {
+    if (lang === 'yaml') {
+      return YAML.safeDump(spec);
+    }
+    return stringify(spec);
+  } catch (err) {
+    return '';
   }
-  return stringify(spec);
 }
 
 export function yaml2json(specText, mode) {
@@ -97,11 +101,10 @@ export function json2yaml(specText, mode) {
  */
 export function applyTheme(spec, theme) {
   // do nothing if this is a custom theme
-  if (theme === 'custom') return;
-  if (theme === 'default') {
-    spec.config = redashTheme;
-  } else {
-    spec.config = vegaThemes[theme];
+  if (!spec) return;
+  const config = redashThemes[theme] || vegaThemes[theme];
+  if (config) {
+    spec.config = { ...config };
   }
   return spec;
 }
@@ -113,19 +116,33 @@ export function parseSpecText({ spec: specText, lang, mode }) {
   let error = null;
   let spec = { ...DEFAULT_SPECS[mode] };
 
-  if (lang === 'json') {
+  // if empty string, return the default spec
+  if (!specText || !specText.trim()) {
+    return { error, spec };
+  }
+  // if lang is not specified, try parse as JSON first
+  if (!lang || lang === 'json') {
     try {
       spec = JSON.parse(specText);
-    } catch (err) {
-      // silently fail
-      error = err.message;
-    }
-  } else if (lang === 'yaml') {
-    try {
-      spec = YAML.safeLoad(specText);
+      lang = 'json';
     } catch (err) {
       error = err.message;
     }
   }
-  return { error, spec };
+  // try parse as YAML, too
+  if (!lang || lang === 'yaml') {
+    try {
+      spec = YAML.safeLoad(specText);
+      lang = 'yaml';
+    } catch (err) {
+      error = err.message;
+    }
+  }
+  // infer mode if not set
+  if (!mode && spec && spec.$schema && spec.$schema.indexOf('vega-lite') !== -1) {
+    mode = Mode.VegaLite;
+  } else {
+    mode = Mode.Vega;
+  }
+  return { error, spec, lang, mode };
 }
