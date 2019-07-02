@@ -118,7 +118,7 @@ export function parseSpecText({ spec: specText, lang, mode }) {
 
   // if empty string, return the default spec
   if (!specText || !specText.trim()) {
-    return { error, spec };
+    return { error: 'You entered an empty spec', spec };
   }
   // if lang is not specified, try parse as JSON first
   if (!lang || lang === 'json') {

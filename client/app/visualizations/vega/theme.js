@@ -84,6 +84,7 @@ const redashThemeBase = {
   },
 
   legend: {
+    titleFontSize: 11,
     labelFontSize: 11,
     padding: 1,
     symbolSize: 30,

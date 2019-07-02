@@ -16,11 +16,9 @@ export const NAMES = {
 export const VEGA_LITE_START_SPEC = `{
   "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
   "description": "{{ query.name }}",
-  "width": "500",
-  "height": "300",
   "autosize": "fit",
   "data": {
-    "name": "query_results",
+    "name": "current_query",
     "url": "{{ dataUrl }}",
     "format": {
       "type": "csv",

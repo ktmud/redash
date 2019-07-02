@@ -28,3 +28,4 @@ client/cypress/screenshots
 client/cypress/videos
 
 client/app/assets/less/**/*.css
+client/app/visualizations/vega/vega.css

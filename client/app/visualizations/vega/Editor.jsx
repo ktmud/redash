@@ -246,6 +246,7 @@ export default class VegaEditor extends React.Component {
         </Form.Item>
         <AceEditor
           height="55vh" // 55% viewport height
+          width="auto"
           theme="textmate"
           value={spec}
           mode={lang}

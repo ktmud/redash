@@ -53,7 +53,7 @@ export function VisualizationRenderer(props) {
   return (
     <React.Fragment>
       {showFilters && <Filters filters={filters} onChange={setFilters} />}
-      <div>
+      <div> {/* TODO: is this DIV really necessary? */}
         <Renderer
           query={props.query}
           options={options}
