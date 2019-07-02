@@ -1,5 +1,4 @@
 client/.tmp/
-client/dist/
 node_modules/
 .tmp/
 .venv/

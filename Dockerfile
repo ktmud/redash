@@ -6,7 +6,7 @@ RUN npm install
 
 COPY client /frontend/client
 COPY webpack.config.js /frontend/
-RUN npm run build
+# RUN npm run build
 
 FROM redash/base:debian
 
