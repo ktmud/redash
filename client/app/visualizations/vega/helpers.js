@@ -28,10 +28,16 @@ function convertDateFormat(momentFormat) {
 export function renderInitialSpecText(options, { data, query }) {
   let x = null;
   const yFields = [];
-  const { spec: specText, lang, mode, theme, origLang, origMode } = options;
-  let spec = specText;
-  // if spec is not empty, do nothing
-  if (!spec) {
+  const { spec: specText, lang, mode, theme } = options;
+  let { origLang, origMode } = options;
+  let spec = { ...DEFAULT_SPECS[mode] };
+
+  // if spec is empty, render the default spec
+  if (!specText || !specText.trim()) {
+    // since we are rendering from JSON & Vega-Lite, set origLang & origMode
+    // to appropriate values
+    origLang = 'json';
+    origMode = Mode.VegaLite;
     // infer xy fields based on data types
     if (data && data.columns && data.columns.length > 0) {
       data.columns.forEach((col) => {
@@ -56,31 +62,41 @@ export function renderInitialSpecText(options, { data, query }) {
     spec = parseSpecText({ spec, lang: 'json', mode: Mode.VegaLite }).spec;
     applyTheme(spec, theme);
   } else {
-    const result = parseSpecText({ spec, lang: origLang, mode: origMode });
+    const result = parseSpecText({ spec: specText, lang: origLang, mode: origMode });
     spec = result.spec;
     if (result.error) {
       message.error(`Could not parse existing spec as ${lang}`);
     }
-    // if original mode is Vega-lite, convert to vega
-    if (origMode === Mode.VegaLite && mode === Mode.Vega) {
-      try {
-        spec = vl.compile(spec).spec;
-      } catch (err) {
-        // silently exit
-      }
+  }
+
+  const { width, height } = spec;
+  // if original mode is Vega-lite, convert to vega
+  if (origMode === Mode.VegaLite && mode === Mode.Vega) {
+    try {
+      spec = vl.compile(spec).spec;
+    } catch (err) {
+      // silently exit
+    }
+    // revert width & height values (so we can have auto resize)
+    // must remove undefined values, otherwise YAML dump will fail
+    if (!width) {
+      delete spec.width;
+    }
+    if (!height) {
+      delete spec.height;
     }
   }
-  return dumpSpecText(spec, lang);
+  return dumpSpecText(spec, lang, specText);
 }
 
-export function dumpSpecText(spec, lang) {
+export function dumpSpecText(spec, lang, origText = '') {
   try {
     if (lang === 'yaml') {
       return YAML.safeDump(spec);
     }
     return stringify(spec);
   } catch (err) {
-    return '';
+    return origText;
   }
 }
 
@@ -132,8 +148,13 @@ export function parseSpecText({ spec: specText, lang, mode }) {
   // try parse as YAML, too
   if (!lang || lang === 'yaml') {
     try {
-      spec = YAML.safeLoad(specText);
+      const loaded = YAML.safeLoad(specText);
       lang = 'yaml';
+      if (loaded === specText) {
+        error = 'Invalid spec';
+      } else {
+        spec = loaded;
+      }
     } catch (err) {
       error = err.message;
     }

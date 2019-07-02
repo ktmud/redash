@@ -2,7 +2,7 @@
  * Vega Theme tweaked for Redash
  */
 const markColor = '#ab5787';
-const axisColor = '#979797';
+const axisColor = '#939393';
 const titleColor = '#666666';
 
 // Borrowed from https://carto.com/carto-colors/
@@ -64,30 +64,36 @@ const redashThemeBase = {
   rect: { fill: markColor },
   shape: { stroke: markColor },
   symbol: { fill: markColor, size: 30 },
+  fontSize: 13,
 
   axis: {
     domain: false,
     grid: true,
     gridWidth: 0.2,
     labelColor: axisColor,
+    labelPadding: 5,
+    labelFlushOffset: 4,
+    labelFontSize: 11,
     tickColor: axisColor,
     tickWidth: 0.2,
     tickSize: 6,
     titleColor,
-    titleFontSize: 12,
-    titleFontWeight: 'normal',
+    titleFontSize: 13,
+    titleFontWeight: 400,
+    titlePadding: 8,
   },
 
   axisY: {
     tickSize: 0,
-    labelPadding: 4,
   },
 
   legend: {
-    titleFontSize: 11,
-    labelFontSize: 11,
-    padding: 1,
-    symbolSize: 30,
+    titleFontWeight: 400,
+    titleFontSize: 14,
+    labelFontSize: 13,
+    labelFontWeight: 200,
+    padding: 0,
+    symbolSize: 35,
     symbolType: 'square',
   },
 

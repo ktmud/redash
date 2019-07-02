@@ -70,11 +70,11 @@ export default class VegaRenderer extends React.PureComponent {
     // eslint-disable-next-line compat/compat
     this.resizeObserver = new ResizeObserver((entries) => {
       const rect = entries[0].contentRect;
+      // make sure sizes are not zeros
       if (rect.width && rect.height) {
-        this.updateLayout({ parentSize: rect });
+        this.updateLayout(rect);
       }
     });
-    this.updateLayout();
     this.resizeObserver.observe(this.elem.offsetParent || this.elem);
   }
 
@@ -102,40 +102,60 @@ export default class VegaRenderer extends React.PureComponent {
   };
 
   /**
+   * Calculate the height and width in pixels based on spec specification
+   * and parent container size
+   */
+  autoLayout(parentSize) {
+    const { error, spec, autoresize } = this.parseOptions(this.props.options);
+    if (!this.elem || error) return { width: 0, height: 0 };
+    let { width, height } = spec;
+    if (autoresize) {
+      // automatically get parent size
+      if (!parentSize) {
+        const node = this.elem.offsetParent || this.elem;
+        const bounds = node.getBoundingClientRect();
+        parentSize = bounds;
+      }
+      const { width: specWidth, height: specHeight } = spec;
+      let hPadding = 20;
+      // if from editor, needs space for the edit link
+      let vPadding = this.props.fromEditor ? 40 : 5;
+      if (typeof spec.padding === 'number') {
+        hPadding += 2 * spec.padding;
+        vPadding += 2 * spec.padding;
+      } else if (isObject(spec.padding)) {
+        hPadding += (spec.padding.left || 0) + (spec.padding.right || 0);
+        vPadding += (spec.padding.top || 0) + (spec.padding.bottom || 0);
+      }
+      width = Math.round(specWidth || Math.max(parentSize.width - hPadding, 100));
+      height = Math.round(specHeight || Math.min(450, Math.max(parentSize.height - vPadding, 320)));
+    } else {
+      width = spec.width;
+      height = spec.height;
+    }
+
+    return { width, height };
+  }
+
+  /**
    * Updaete width & height in spec based on parent size
+   *
+   * @param {number} parentSize - parent width and height
    * @param {number} width - manual width in pixels
    * @param {number} height - manual height in pixels
-   * @param {number} parentSize - parent width and height
    */
-  updateLayout({ width, height, parentSize } = {}) {
+  updateLayout(parentSize) {
     // when there is error message or element is unmounting
     // these elements might be null
-    if (!this.vega || !this.vega.element) return;
-    const { spec, autoresize } = this.parseOptions(this.props.options);
-    if (!spec || !autoresize) return;
-    if (!parentSize) {
-      const node = this.elem.offsetParent || this.elem;
-      const bounds = node.getBoundingClientRect();
-      parentSize = {
-        width: bounds.width,
-        height: bounds.height,
-      };
-    }
-    const { width: specWidth, height: specHeight } = spec;
-    let hPadding = 20;
-    // if from editor, needs space for the edit link
-    let vPadding = this.props.fromEditor ? 40 : 5;
-    if (typeof spec.padding === 'number') {
-      hPadding += 2 * spec.padding;
-      vPadding += 2 * spec.padding;
-    } else if (isObject(spec.padding)) {
-      hPadding += (spec.padding.left || 0) + (spec.padding.right || 0);
-      vPadding += (spec.padding.top || 0) + (spec.padding.bottom || 0);
-    }
-    width = width || specWidth || Math.max(parentSize.width - hPadding, 100);
-    height = height || specHeight || Math.min(400, Math.max(parentSize.height - vPadding, 300));
+    if (!this.vega || !this.vega.view) return {};
+    const { width, height } = this.autoLayout(parentSize);
     if (width !== this.state.width || height !== this.state.height) {
-      this.setState({ width, height });
+      // save current width & height to state
+      this.setState({ width, height }, () => {
+        // but manually update vega view size
+        this.vega.view.width(width);
+        this.vega.view.height(height);
+      });
     }
   }
 
@@ -144,13 +164,14 @@ export default class VegaRenderer extends React.PureComponent {
     const options = props.options;
     // parseProps is cached by memoization
     const { error, mode, spec, autoresize } = this.parseProps(this.props);
+    const { width, height } = this.autoLayout();
     const alertContent = (
       <React.Fragment>
         {' '}
-        {error && error !== 'Invalid spec' ? (
+        {error ? (
           <React.Fragment>
             {' '}
-            <strong>{error}</strong>. <br />
+            <strong>{error === 'Invalid spec' ? 'Your spec is not valid' : error}</strong>. <br />
           </React.Fragment>
         ) : null}{' '}
         See{' '}
@@ -178,7 +199,6 @@ export default class VegaRenderer extends React.PureComponent {
           specText = yaml2json(specText, mode).specText;
         }
         if (autoresize) {
-          const { width, height } = this.state;
           let updatedSpec = { ...spec };
           if (mode === Mode.VegaLite) {
             updatedSpec = this.parseOptions(this.props.options, false).spec;
@@ -215,8 +235,8 @@ export default class VegaRenderer extends React.PureComponent {
             ref={(elem) => {
               this.vega = elem;
             }}
-            width={this.state.width}
-            height={this.state.height}
+            width={width}
+            height={height}
             spec={spec}
             enableHover
             tooltip={new Handler().call}
