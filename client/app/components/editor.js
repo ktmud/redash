@@ -30,5 +30,6 @@ export function defineDummySnippets(mode, fn) {
       }),
   );
 }
+
 export const langTools = ace.acequire('ace/ext/language_tools');
 export const snippetManager = ace.acequire('ace/snippets').snippetManager;

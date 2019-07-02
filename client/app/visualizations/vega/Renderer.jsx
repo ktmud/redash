@@ -1,6 +1,6 @@
 import stringify from 'json-stringify-pretty-compact';
 import ResizeObserver from 'resize-observer-polyfill';
-import { isObject } from 'lodash';
+import { isObject, debounce } from 'lodash';
 import React from 'react';
 import Vega from 'react-vega';
 import * as vl from 'vega-lite';
@@ -15,6 +15,16 @@ import { Mode, NAMES } from './consts';
 import { parseSpecText, yaml2json, applyTheme } from './helpers';
 import './vega.less';
 
+
+function getElemPadding(elem) {
+  const style = getComputedStyle(elem);
+  return {
+    left: parseInt(style.getPropertyValue('padding-left'), 10) || 0,
+    right: parseInt(style.getPropertyValue('padding-right'), 10) || 0,
+    top: parseInt(style.getPropertyValue('padding-top'), 10) || 0,
+    bottom: parseInt(style.getPropertyValue('padding-bottom'), 10) || 0,
+  };
+}
 
 export default class VegaRenderer extends React.PureComponent {
   static propTypes = RendererPropTypes;
@@ -73,7 +83,7 @@ export default class VegaRenderer extends React.PureComponent {
       const rect = entries[0].contentRect;
       // make sure sizes are not zeros
       if (rect.width && rect.height) {
-        this.updateLayout(rect);
+        this.updateLayout();
       }
     });
     this.resizeObserver.observe(this.elem.offsetParent || this.elem);
@@ -114,24 +124,25 @@ export default class VegaRenderer extends React.PureComponent {
       // automatically get parent size
       if (!width || !height) {
         const parent = this.elem.offsetParent || this.elem;
-        const currentBounds = this.elem.getBoundingClientRect();
         const parentBounds = parent.getBoundingClientRect();
+        const padding = getElemPadding(parent);
         // adjust for left and top padding
-        width = Math.max(0, parentBounds.width - 2 * (currentBounds.left - parentBounds.left));
-        height = Math.max(0, parentBounds.height - 2 * (currentBounds.top - parentBounds.top));
+        width = Math.max(0, parentBounds.width - padding.left - padding.right);
+        height = Math.max(0, parentBounds.height - padding.top - padding.bottom);
       }
-      let hPadding = 20;
-      let vPadding = this.props.fromEditor ? 40 : 0;
+      let hPadding = 10;
+      let vPadding = this.props.fromEditor ? 30 : 0;
+      const specPadding = spec.padding !== undefined ? spec.padding : 5;
       // if this is the initial rendering, set a min height
       if (typeof spec.padding === 'number') {
-        hPadding += 2 * spec.padding;
-        vPadding += 2 * spec.padding;
-      } else if (isObject(spec.padding)) {
-        hPadding += (spec.padding.left || 0) + (spec.padding.right || 0);
-        vPadding += (spec.padding.top || 0) + (spec.padding.bottom || 0);
+        hPadding += 2 * specPadding;
+        vPadding += 2 * specPadding;
+      } else if (isObject(specPadding)) {
+        hPadding += (specPadding.left || 0) + (specPadding.right || 0);
+        vPadding += (specPadding.top || 0) + (specPadding.bottom || 0);
       }
-      width = Math.round(specWidth || width) - hPadding;
-      height = Math.round(specHeight || height) - vPadding;
+      width = Math.floor(specWidth || width) - hPadding;
+      height = Math.floor(specHeight || height) - vPadding;
     } else {
       width = spec.width;
       height = spec.height;
@@ -154,11 +165,11 @@ export default class VegaRenderer extends React.PureComponent {
     const { width, height } = this.autoLayout(parentSize);
     if (width !== this.state.width || height !== this.state.height) {
       // save current width & height to state
-      this.setState({ width, height }, () => {
+      this.setState({ width, height }, debounce(() => {
         // but manually update vega view size
         this.vega.view.width(this.state.width);
         this.vega.view.height(this.state.height);
-      });
+      }, 50));
     }
   }
 

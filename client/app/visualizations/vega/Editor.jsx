@@ -6,17 +6,14 @@ import { debounce } from 'lodash';
 import AceEditor from 'react-ace';
 import { UndoManager, EditSession } from 'brace';
 
+// Initialize editor configuration (language support, etc.)
+import { langTools } from '@/components/editor';
+
 import { EditorPropTypes } from '../index';
 import { Mode, THEMES, THEME_NAMES, DEFAULT_OPTIONS } from './consts';
 import { renderInitialSpecText } from './helpers';
 
-// Initialize editor configuration (language support, etc.)
-import '@/components/editor';
-
 // Monaco diagnostics option
-//
-// const vegaSchema = require('vega/build/vega-schema.json');
-// const vegaLiteSchema = require('vega-lite/build/vega-lite-schema.json');
 //
 // export const MONACO_SCHEMAS = [
 //   {
@@ -187,6 +184,11 @@ export default class VegaEditor extends React.Component {
   editorDidMount(editor) {
     this.editor = editor;
     this.updateEditorBuffer();
+    langTools.setCompleters([
+      langTools.snippetCompleter,
+      langTools.keyWordCompleter,
+      langTools.textCompleter,
+    ]);
   }
 
   render() {

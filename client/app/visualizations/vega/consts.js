@@ -1,3 +1,6 @@
+// const vegaSchema = require('vega/build/vega-schema.json');
+// const vegaLiteSchema = require('vega-lite/build/vega-lite-schema.json');
+
 export const Mode = {
   Vega: 'vega',
   VegaLite: 'vega-lite',
@@ -12,6 +15,11 @@ export const NAMES = {
   [Mode.Vega]: 'Vega',
   [Mode.VegaLite]: 'Vega-Lite',
 };
+
+// export const SCHEMAS = {
+//   [Mode.Vega]: vegaSchema,
+//   [Mode.VegaLite]: vegaLiteSchema,
+// };
 
 export const VEGA_LITE_START_SPEC = `{
   "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
