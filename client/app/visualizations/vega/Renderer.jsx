@@ -75,7 +75,7 @@ export default class VegaRenderer extends React.PureComponent {
       }
     });
     this.updateLayout();
-    this.resizeObserver.observe(this.elem.offsetParent);
+    this.resizeObserver.observe(this.elem.offsetParent || this.elem);
   }
 
   componentWillUnmount() {
@@ -114,7 +114,7 @@ export default class VegaRenderer extends React.PureComponent {
     const { spec, autoresize } = this.parseOptions(this.props.options);
     if (!spec || !autoresize) return;
     if (!parentSize) {
-      const node = this.elem.offsetParent;
+      const node = this.elem.offsetParent || this.elem;
       const bounds = node.getBoundingClientRect();
       parentSize = {
         width: bounds.width,

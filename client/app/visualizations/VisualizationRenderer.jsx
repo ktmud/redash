@@ -55,7 +55,6 @@ export function VisualizationRenderer(props) {
       {showFilters && <Filters filters={filters} onChange={setFilters} />}
       <div> {/* TODO: is this DIV really necessary? */}
         <Renderer
-          query={props.query}
           options={options}
           data={filteredData}
           visualization={visualization}
@@ -68,7 +67,6 @@ export function VisualizationRenderer(props) {
 
 VisualizationRenderer.propTypes = {
   visualization: VisualizationType.isRequired,
-  query: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
   queryResult: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
   filters: FiltersType,
   showFilters: PropTypes.bool,
