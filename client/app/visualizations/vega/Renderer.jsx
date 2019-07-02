@@ -15,6 +15,7 @@ import { Mode, NAMES } from './consts';
 import { parseSpecText, yaml2json, applyTheme } from './helpers';
 import './vega.less';
 
+
 export default class VegaRenderer extends React.PureComponent {
   static propTypes = RendererPropTypes;
 
@@ -103,23 +104,25 @@ export default class VegaRenderer extends React.PureComponent {
 
   /**
    * Calculate the height and width in pixels based on spec specification
-   * and parent container size
+   * and parent container size.
    */
-  autoLayout(parentSize) {
+  autoLayout({ width, height } = {}) {
     const { error, spec, autoresize } = this.parseOptions(this.props.options);
     if (!this.elem || error) return { width: 0, height: 0 };
-    let { width, height } = spec;
+    const { width: specWidth, height: specHeight } = spec;
     if (autoresize) {
       // automatically get parent size
-      if (!parentSize) {
-        const node = this.elem.offsetParent || this.elem;
-        const bounds = node.getBoundingClientRect();
-        parentSize = bounds;
+      if (!width || !height) {
+        const parent = this.elem.offsetParent || this.elem;
+        const currentBounds = this.elem.getBoundingClientRect();
+        const parentBounds = parent.getBoundingClientRect();
+        // adjust for left and top padding
+        width = Math.max(0, parentBounds.width - 2 * (currentBounds.left - parentBounds.left));
+        height = Math.max(0, parentBounds.height - 2 * (currentBounds.top - parentBounds.top));
       }
-      const { width: specWidth, height: specHeight } = spec;
       let hPadding = 20;
-      // if from editor, needs space for the edit link
-      let vPadding = this.props.fromEditor ? 40 : 5;
+      let vPadding = this.props.fromEditor ? 40 : 0;
+      // if this is the initial rendering, set a min height
       if (typeof spec.padding === 'number') {
         hPadding += 2 * spec.padding;
         vPadding += 2 * spec.padding;
@@ -127,8 +130,8 @@ export default class VegaRenderer extends React.PureComponent {
         hPadding += (spec.padding.left || 0) + (spec.padding.right || 0);
         vPadding += (spec.padding.top || 0) + (spec.padding.bottom || 0);
       }
-      width = Math.round(specWidth || Math.max(parentSize.width - hPadding, 100));
-      height = Math.round(specHeight || Math.min(450, Math.max(parentSize.height - vPadding, 320)));
+      width = Math.round(specWidth || width) - hPadding;
+      height = Math.round(specHeight || height) - vPadding;
     } else {
       width = spec.width;
       height = spec.height;
@@ -153,8 +156,8 @@ export default class VegaRenderer extends React.PureComponent {
       // save current width & height to state
       this.setState({ width, height }, () => {
         // but manually update vega view size
-        this.vega.view.width(width);
-        this.vega.view.height(height);
+        this.vega.view.width(this.state.width);
+        this.vega.view.height(this.state.height);
       });
     }
   }

@@ -20,8 +20,17 @@
 }
 
 .vega-canvas-container {
+  font-size: 0;  /* make sure blank space doesn't increase container height */
   text-align: center;
+  max-height: 600px;
+  min-height: 100px;
 }
+.ant-modal-body, .modal-body {
+  .vega-canvas-container {
+    min-height: 40vh;
+  }
+}
+
 .vega-external-link {
   text-align: center;
   margin-top: 10px;
