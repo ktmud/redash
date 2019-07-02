@@ -3,11 +3,10 @@ import YAML from 'js-yaml';
 import * as vegaThemes from 'vega-themes';
 import * as vl from 'vega-lite';
 import stringify from 'json-stringify-pretty-compact';
+import { merge } from 'lodash';
 
 import { getQueryDataUrl } from '@/components/queries/index';
 import { clientConfig } from '@/services/auth';
-import { message } from 'antd';
-
 import { Mode, VEGA_LITE_START_SPEC, DEFAULT_SPECS } from './consts';
 import redashThemes from './theme';
 
@@ -27,8 +26,9 @@ function convertDateFormat(momentFormat) {
  */
 export function renderInitialSpecText(options, { data, query }) {
   let x = null;
+  let error = null;
   const yFields = [];
-  const { spec: specText, lang, mode, theme } = options;
+  const { spec: specText, lang, mode } = options;
   let { origLang, origMode } = options;
   let spec = { ...DEFAULT_SPECS[mode] };
 
@@ -60,13 +60,10 @@ export function renderInitialSpecText(options, { data, query }) {
     // render as Vega-lite JSON first
     spec = Mustache.render(VEGA_LITE_START_SPEC, params);
     spec = parseSpecText({ spec, lang: 'json', mode: Mode.VegaLite }).spec;
-    applyTheme(spec, theme);
   } else {
     const result = parseSpecText({ spec: specText, lang: origLang, mode: origMode });
     spec = result.spec;
-    if (result.error) {
-      message.error(`Could not parse existing spec as ${lang}`);
-    }
+    error = result.error;
   }
 
   const { width, height } = spec;
@@ -86,7 +83,8 @@ export function renderInitialSpecText(options, { data, query }) {
       delete spec.height;
     }
   }
-  return dumpSpecText(spec, lang, specText);
+
+  return { error, specText: dumpSpecText(spec, lang, specText) };
 }
 
 export function dumpSpecText(spec, lang, origText = '') {
@@ -120,7 +118,7 @@ export function applyTheme(spec, theme) {
   if (!spec) return;
   const config = redashThemes[theme] || vegaThemes[theme];
   if (config) {
-    spec.config = { ...config };
+    spec.config = merge({}, config, spec.config);
   }
   return spec;
 }

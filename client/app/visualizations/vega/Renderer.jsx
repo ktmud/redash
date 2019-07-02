@@ -31,8 +31,8 @@ export default class VegaRenderer extends React.PureComponent {
     const parsed = parseSpecText({ spec, lang, mode });
     error = parsed.error;
     spec = parsed.spec; // if error, spec will be default spec
-    // In case we updated theme in the JavaScript module,
-    // but the stored spec still has the old theme
+
+    // Always apply the them in config
     applyTheme(spec, theme);
 
     if (error) {

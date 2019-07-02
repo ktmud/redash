@@ -78,7 +78,7 @@ const redashThemeBase = {
     tickWidth: 0.2,
     tickSize: 6,
     titleColor,
-    titleFontSize: 13,
+    titleFontSize: 14,
     titleFontWeight: 400,
     titlePadding: 8,
   },

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, Select, message, Icon } from 'antd';
+import { Form, Select, Icon } from 'antd';
 import { debounce } from 'lodash';
 // import stringify from 'json-stringify-pretty-compact';
 // import * as YAML from 'js-yaml';
@@ -8,7 +8,7 @@ import { UndoManager, EditSession } from 'brace';
 
 import { EditorPropTypes } from '../index';
 import { Mode, THEMES, THEME_NAMES, DEFAULT_OPTIONS } from './consts';
-import { renderInitialSpecText, parseSpecText, applyTheme, dumpSpecText } from './helpers';
+import { renderInitialSpecText } from './helpers';
 
 // Initialize editor configuration (language support, etc.)
 import '@/components/editor';
@@ -71,12 +71,14 @@ import '@/components/editor';
 function createModel(initialValue, lang, uri) {
   // monaco.editor.createModel(initialValue, lang, uri);
   const model = new EditSession(initialValue, `ace/mode/${lang}`);
-  model.setOption({ tabSize: 2 });
+  model.setTabSize(2);
   model.setUndoManager(new UndoManager());
+  model.setUseWrapMode(true);
+  model.setUseWorker(true);
+  model.setUseSoftTabs(true);
   model.uri = uri;
   return model;
 }
-
 
 const ONCHANGE_TIMEOUT = 700;
 
@@ -88,7 +90,6 @@ export default class VegaEditor extends React.Component {
     this.editor = null; // reference to the editor instance.
     this.state = { ...props.options };
     this.buffers = {}; // Editor model buffer based on lang & mode
-    this.onPaste = this.onPaste.bind(this);
     this.updateSpec = this.updateSpec.bind(this);
     this.updateLang = this.updateLang.bind(this);
     this.updateTheme = this.updateTheme.bind(this);
@@ -102,22 +103,6 @@ export default class VegaEditor extends React.Component {
     // Object.values(this.buffers).forEach(buf => buf.model.dispose());
   }
 
-  onPaste({ text: spec }) {
-    const parsed = parseSpecText({ spec });
-    this.pasting = true;
-    if (!parsed.error) {
-      // only update mode and lang
-      const { mode, lang } = parsed;
-      this.updateEditorBuffer({ mode, lang, spec: '' });
-    }
-    if (parsed.error) {
-      message.error('Invalid Spec: ' + parsed.error);
-    }
-    setTimeout(() => {
-      this.pasting = false;
-    }, ONCHANGE_TIMEOUT);
-  }
-
   getEditorBuffer(targetState) {
     const { spec, lang, mode, theme } = { ...this.state, ...targetState };
     const { lang: origLang, mode: origMode } = this.state;
@@ -125,19 +110,24 @@ export default class VegaEditor extends React.Component {
     const bufs = this.buffers;
     const buf = bufs[uri];
     let model = buf && buf.model;
-    if (!buf) {
-      const initialValue = renderInitialSpecText(
-        {
-          spec,
-          lang,
-          mode,
-          theme,
-          origLang,
-          origMode,
-        },
-        this.props,
-      );
-      model = createModel(initialValue, lang, uri);
+
+    // always update editor value to latest spec text
+    const { error, specText } = renderInitialSpecText(
+      {
+        spec,
+        lang,
+        mode,
+        theme,
+        origLang,
+        origMode,
+      },
+      this.props,
+    );
+    if (!model) {
+      model = createModel(specText, lang, uri);
+    } else if (!error && specText) {
+      // ignore errors, and update text if needed
+      model.setValue(specText);
     }
     bufs[uri] = bufs[uri] || { model };
     return bufs[uri];
@@ -168,14 +158,7 @@ export default class VegaEditor extends React.Component {
   }
 
   updateTheme(theme) {
-    const { spec: specText, lang, mode } = this.state;
-    const { error, spec } = parseSpecText({ spec: specText, lang, mode });
-    if (error) {
-      message.error('Theme not applied because your spec is invalid.');
-    }
-    applyTheme(spec, theme);
-    const updatedSpecText = dumpSpecText(spec, this.state.lang);
-    this.setOption({ spec: updatedSpecText, theme });
+    this.setOption({ theme });
   }
 
   /**
@@ -186,6 +169,7 @@ export default class VegaEditor extends React.Component {
     const editor = this.editor;
     const newBuf = this.getEditorBuffer(targetState);
     const curModel = editor.getSession();
+
     if (curModel !== newBuf.model) {
       // if (curModel) {
       //   this.buffers[curModel.uri].viewState = editor.saveViewState();
@@ -195,12 +179,8 @@ export default class VegaEditor extends React.Component {
       //   editor.restoreViewState(newBuf.viewState);
       // }
     }
-    // sync text between editor and state
-    if ('spec' in targetState) {
-      newBuf.model.setValue(targetState.spec);
-    } else {
-      targetState.spec = newBuf.model.getValue();
-    }
+    // sync changed text to option
+    targetState.spec = newBuf.model.getValue();
     this.setOption(targetState);
   }
 
@@ -245,7 +225,7 @@ export default class VegaEditor extends React.Component {
           </a>
         </Form.Item>
         <AceEditor
-          height="55vh" // 55% viewport height
+          height="54vh" // 54% viewport height
           width="auto"
           theme="textmate"
           value={spec}
@@ -253,14 +233,13 @@ export default class VegaEditor extends React.Component {
           setOptions={{
             mergeUndoDeltas: true,
             behavioursEnabled: true,
-            enableSnippets: false,
+            wrapBehavioursEnabled: true,
             enableBasicAutocompletion: true,
+            enableLiveAutocompletion: true,
             autoScrollEditorIntoView: false,
           }}
           editorProps={{ $blockScrolling: Infinity }}
           showPrintMargin={false}
-          wrapEnabled={false}
-          onPaste={this.onPaste}
           onChange={debounce(this.updateSpec, ONCHANGE_TIMEOUT)}
           onLoad={this.editorDidMount}
         />
