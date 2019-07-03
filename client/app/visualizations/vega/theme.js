@@ -1,9 +1,9 @@
 /**
  * Vega Theme tweaked for Redash
  */
-const markColor = '#ab5787';
-const axisColor = '#939393';
-const titleColor = '#666666';
+const markColor = '#1890e3';
+const axisColor = '#767676';
+const titleColor = '#333333';
 
 // Borrowed from https://carto.com/carto-colors/
 const CartoColors = {
@@ -57,11 +57,11 @@ const redashThemeBase = {
   group: {
     fill: '#e5e5e5',
   },
-  arc: { fill: markColor },
-  area: { fill: markColor },
+  arc: { fill: markColor, opacity: 0.9 },
+  area: { fill: markColor, opacity: 0.9 },
   line: { stroke: markColor },
   path: { stroke: markColor },
-  rect: { fill: markColor },
+  rect: { fill: markColor, opacity: 0.9 },
   shape: { stroke: markColor },
   symbol: { fill: markColor, size: 30 },
   fontSize: 13,
@@ -70,11 +70,12 @@ const redashThemeBase = {
     domain: false,
     grid: true,
     gridWidth: 0.2,
+    gridColor: axisColor,
     labelColor: axisColor,
     labelPadding: 5,
     labelFlushOffset: 4,
     labelFontSize: 11,
-    tickColor: axisColor,
+    tickColor: '#808080',
     tickWidth: 0.2,
     tickSize: 6,
     titleColor,
@@ -93,12 +94,12 @@ const redashThemeBase = {
     labelFontSize: 13,
     labelFontWeight: 200,
     padding: 0,
-    symbolSize: 35,
+    symbolSize: 36,
     symbolType: 'square',
   },
 
   view: {
-    stroke: 'transparent',
+    strokeWidth: 0,
   },
 
 };

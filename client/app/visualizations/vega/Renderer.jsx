@@ -1,6 +1,6 @@
 import stringify from 'json-stringify-pretty-compact';
 import ResizeObserver from 'resize-observer-polyfill';
-import { isObject, debounce } from 'lodash';
+import { isObject } from 'lodash';
 import React from 'react';
 import Vega from 'react-vega';
 import * as vl from 'vega-lite';
@@ -15,7 +15,6 @@ import { Mode, NAMES } from './consts';
 import { parseSpecText, yaml2json, applyTheme } from './helpers';
 import './vega.less';
 
-
 function getElemPadding(elem) {
   const style = getComputedStyle(elem);
   return {
@@ -27,7 +26,7 @@ function getElemPadding(elem) {
 }
 
 // the container to which we auto-resize the visualization
-const CONTAINER_SELECTORS = '.query__vis, .scrollbox, .modal-body';
+const CONTAINER_SELECTORS = ['.query__vis', '.scrollbox', '.modal-body'].join(',');
 
 export default class VegaRenderer extends React.PureComponent {
   static propTypes = RendererPropTypes;
@@ -77,7 +76,9 @@ export default class VegaRenderer extends React.PureComponent {
 
   constructor(props) {
     super(props);
-    this.state = { width: 0, height: 0 };
+    this.state = {
+      parentSize: null,
+    };
   }
 
   componentDidMount() {
@@ -92,8 +93,22 @@ export default class VegaRenderer extends React.PureComponent {
     this.resizeObserver.observe(this.elem.closest(CONTAINER_SELECTORS));
   }
 
+  componentDidUpdate() {
+    this.updateLayout();
+  }
+
   componentWillUnmount() {
     this.resizeObserver.disconnect();
+  }
+
+  getParentSize() {
+    const parent = this.elem.closest(CONTAINER_SELECTORS) || this.elem;
+    const bounds = parent.getBoundingClientRect();
+    return {
+      node: parent,
+      width: Math.floor(bounds.width),
+      height: Math.floor(bounds.height),
+    };
   }
 
   /**
@@ -116,63 +131,62 @@ export default class VegaRenderer extends React.PureComponent {
   };
 
   /**
-   * Calculate the height and width in pixels based on spec specification
-   * and parent container size.
+   * Calculate the height and width in pixels based on
+   *    1. spec specification
+   *    2. parent container size.
    */
-  autoLayout({ width, height } = {}) {
-    const { error, spec, autoresize } = this.parseOptions(this.props.options);
-    if (!this.elem || error) return { width: 0, height: 0 };
-    const { width: specWidth, height: specHeight } = spec;
-    if (autoresize) {
-      // automatically get parent size
-      if (!width || !height) {
-        const parent = this.elem.closest(CONTAINER_SELECTORS) || this.elem;
-        const parentBounds = parent.getBoundingClientRect();
-        const padding = getElemPadding(parent);
-        // adjust for left and top padding
-        width = Math.max(0, parentBounds.width - padding.left - padding.right);
-        height = Math.max(0, parentBounds.height - padding.top - padding.bottom);
-      }
-      let hPadding = 10;
-      let vPadding = this.props.fromEditor ? 30 : 0;
-      const specPadding = spec.padding !== undefined ? spec.padding : 5;
-      // if this is the initial rendering, set a min height
-      if (typeof spec.padding === 'number') {
-        hPadding += 2 * specPadding;
-        vPadding += 2 * specPadding;
-      } else if (isObject(specPadding)) {
-        hPadding += (specPadding.left || 0) + (specPadding.right || 0);
-        vPadding += (specPadding.top || 0) + (specPadding.bottom || 0);
-      }
-      width = Math.floor(specWidth || width) - hPadding;
-      height = Math.floor(specHeight || height) - vPadding;
-    } else {
-      width = spec.width;
-      height = spec.height;
-    }
+  autoLayout({ error, spec, autoresize } = {}) {
+    let width = 0;
+    let height = 0;
 
+    if (!this.elem || error) return { width, height };
+
+    const { width: specWidth, height: specHeight } = spec;
+    if (!autoresize) return { width: specWidth, height: specHeight };
+
+    // obtain prent size and adjust for parent padding
+    const parent = this.state.parentSize;
+    if (!parent) return { width, height };
+
+    const padding = getElemPadding(parent.node);
+    width = Math.max(0, parent.width - padding.left - padding.right);
+    height = Math.max(0, parent.height - padding.top - padding.bottom);
+
+    // adjust for Vega view padding
+    let hPadding = 10;
+    let vPadding = this.props.fromEditor ? 30 : 0;
+    const specPadding = spec.padding !== undefined ? spec.padding : 5;
+    if (typeof spec.padding === 'number') {
+      hPadding += 2 * specPadding;
+      vPadding += 2 * specPadding;
+    } else if (isObject(specPadding)) {
+      hPadding += (specPadding.left || 0) + (specPadding.right || 0);
+      vPadding += (specPadding.top || 0) + (specPadding.bottom || 0);
+    }
+    width = Math.floor(specWidth || width) - hPadding;
+    height = Math.floor(specHeight || height) - vPadding;
     return { width, height };
   }
 
   /**
-   * Updaete width & height in spec based on parent size
+   * Updaete width & height in spec based on parent size,
+   * but don't sync the width/height pixels into spec, because
+   * we want the spec to be stored as autoresize, unless
+   * users specifically set width and height.
+   *
+   * This is also why we are only updating state and operate
+   * on vega.view directly.)
    *
    * @param {number} parentSize - parent width and height
    * @param {number} width - manual width in pixels
    * @param {number} height - manual height in pixels
    */
-  updateLayout(parentSize) {
-    // when there is error message or element is unmounting
-    // these elements might be null
-    if (!this.vega || !this.vega.view) return {};
-    const { width, height } = this.autoLayout(parentSize);
-    if (width !== this.state.width || height !== this.state.height) {
-      // save current width & height to state
-      this.setState({ width, height }, debounce(() => {
-        // but manually update vega view size
-        this.vega.view.width(this.state.width);
-        this.vega.view.height(this.state.height);
-      }, 50));
+  updateLayout() {
+    if (!this.vega || !this.vega.view) return;
+    const newSize = this.getParentSize();
+    const oldSize = this.state.parentSize;
+    if (!oldSize || Math.abs(newSize.width - oldSize.width) > 2 || Math.abs(newSize.height - oldSize.height) > 2) {
+      this.setState({ parentSize: newSize });
     }
   }
 
@@ -181,7 +195,7 @@ export default class VegaRenderer extends React.PureComponent {
     const options = props.options;
     // parseProps is cached by memoization
     const { error, mode, spec, autoresize } = this.parseProps(this.props);
-    const { width, height } = this.autoLayout();
+    const { width, height } = this.autoLayout({ error, spec, autoresize });
     const alertContent = (
       <React.Fragment>
         {' '}

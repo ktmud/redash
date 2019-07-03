@@ -90,9 +90,9 @@ export const THEMES = [
 ];
 export const THEME_NAMES = {
   custom: 'Custom Theme',
-  bold: 'Bold',
-  pastel: 'Pastel',
-  prism: 'Prism',
+  bold: 'Carto Bold',
+  pastel: 'Carto Pastel',
+  prism: 'Carto Prism',
   dark: 'Dark',
   excel: 'Microsoft Excel',
   ggplot2: 'ggplot2',
@@ -106,5 +106,5 @@ export const DEFAULT_OPTIONS = {
   lang: 'yaml',
   mode: Mode.VegaLite,
   spec: '',
-  theme: 'bold',
+  theme: 'custom',
 };
