@@ -26,6 +26,9 @@ function getElemPadding(elem) {
   };
 }
 
+// the container to which we auto-resize the visualization
+const CONTAINER_SELECTORS = '.query__vis, .scrollbox, .modal-body';
+
 export default class VegaRenderer extends React.PureComponent {
   static propTypes = RendererPropTypes;
 
@@ -86,7 +89,7 @@ export default class VegaRenderer extends React.PureComponent {
         this.updateLayout();
       }
     });
-    this.resizeObserver.observe(this.elem.offsetParent || this.elem);
+    this.resizeObserver.observe(this.elem.closest(CONTAINER_SELECTORS));
   }
 
   componentWillUnmount() {
@@ -123,7 +126,7 @@ export default class VegaRenderer extends React.PureComponent {
     if (autoresize) {
       // automatically get parent size
       if (!width || !height) {
-        const parent = this.elem.offsetParent || this.elem;
+        const parent = this.elem.closest(CONTAINER_SELECTORS) || this.elem;
         const parentBounds = parent.getBoundingClientRect();
         const padding = getElemPadding(parent);
         // adjust for left and top padding
