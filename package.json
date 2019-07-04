@@ -17,7 +17,9 @@
     "test": "TZ=Africa/Khartoum jest",
     "test:watch": "jest --watch",
     "cypress:install": "npm install --no-save cypress@^3.1.5 @percy/cypress@^0.2.3 atob@2.1.2",
-    "cypress": "node client/cypress/cypress.js"
+    "cypress": "node client/cypress/cypress.js",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -94,7 +96,8 @@
     "vega": "^5.4.0",
     "vega-lite": "^3.3.0",
     "vega-themes": "^2.3.0",
-    "vega-tooltip": "^0.17.0"
+    "vega-tooltip": "^0.17.0",
+    "snyk": "^1.190.0"
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",
@@ -191,5 +194,6 @@
     "and_ff >= 64",
     "and_uc >= 11.8",
     "samsung >= 6.2"
-  ]
+  ],
+  "snyk": true
 }
