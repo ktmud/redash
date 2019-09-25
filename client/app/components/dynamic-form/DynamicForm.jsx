@@ -19,15 +19,31 @@ import helper from "./dynamicFormHelper";
 
 import "./DynamicForm.less";
 
+const { TextArea } = Input;
+
 const fieldRules = ({ type, required, minLength }) => {
   const requiredRule = required;
   const minLengthRule = minLength && includes(["text", "email", "password"], type);
   const emailTypeRule = type === "email";
+  const jsonRule = type === "json";
 
   return [
     requiredRule && { required, message: "This field is required." },
     minLengthRule && { min: minLength, message: "This field is too short." },
     emailTypeRule && { type: "email", message: "This field must be a valid email." },
+    jsonRule && {
+      type: "object",
+      transform(x) {
+        if (x && x.trim()) {
+          try {
+            JSON.parse(x);
+          } catch {
+            return "";
+          }
+        }
+      },
+      message: "This field must be a JSON string.",
+    },
   ].filter(rule => rule);
 };
 
@@ -85,6 +101,20 @@ class DynamicForm extends React.Component {
     }));
   };
 
+  parseValues = values => {
+    this.props.fields.forEach(field => {
+      if (field.type === "json" && field.name in values) {
+        try {
+          values[field.name] = JSON.parse(values[field.name]);
+        } catch {
+          // Invalid JSON must be discarded
+          values[field.name] = null;
+        }
+      }
+    });
+    return values;
+  };
+
   handleSubmit = e => {
     this.setState({ isSubmitting: true });
     e.preventDefault();
@@ -99,7 +129,7 @@ class DynamicForm extends React.Component {
 
       if (!err) {
         this.props.onSubmit(
-          values,
+          this.parseValues(values),
           msg => {
             const { setFieldsValue, getFieldsValue } = this.props.form;
             this.setState({ isSubmitting: false });
@@ -189,6 +219,11 @@ class DynamicForm extends React.Component {
     const { getFieldDecorator } = this.props.form;
     const { name, type, initialValue } = field;
     const fieldLabel = field.title || toHuman(name);
+    let initialValue = field.initialValue;
+
+    if (isPlainObject(initialValue) || isArray(initialValue)) {
+      initialValue = JSON.stringify(field.initialValue);
+    }
 
     const options = {
       rules: fieldRules(field),
@@ -207,9 +242,11 @@ class DynamicForm extends React.Component {
     } else if (type === "number") {
       return getFieldDecorator(name, options)(<InputNumber {...props} />);
     } else if (type === "textarea") {
-      return getFieldDecorator(name, options)(<Input.TextArea {...props} />);
+      return getFieldDecorator(name, options)(<TextArea {...props} />);
     } else if (type === "ace") {
       return getFieldDecorator(name, options)(<AceEditorInput {...props} />);
+    } else if (type === "json") {
+      return getFieldDecorator(name, options)(<TextArea {...props} />);
     }
     return getFieldDecorator(name, options)(<Input {...props} />);
   }
@@ -221,12 +258,6 @@ class DynamicForm extends React.Component {
       const fieldLabel = title || toHuman(name);
       const { feedbackIcons, form } = this.props;
 
-      const formItemProps = {
-        className: "m-b-10",
-        hasFeedback: type !== "checkbox" && type !== "file" && feedbackIcons,
-        label: type === "checkbox" ? "" : fieldLabel,
-      };
-
       const fieldProps = {
         ...field.props,
         className: "w-100",
@@ -236,6 +267,12 @@ class DynamicForm extends React.Component {
         autoFocus,
         placeholder: field.placeholder,
         "data-test": fieldLabel,
+      };
+      const formItemProps = {
+        className: "m-b-10",
+        hasFeedback: type !== "checkbox" && type !== "file" && feedbackIcons,
+        label: type === "checkbox" ? "" : fieldLabel,
+        extra: fieldProps.extra,
       };
 
       return (

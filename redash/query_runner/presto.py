@@ -43,6 +43,8 @@ class Presto(BaseQueryRunner):
                 "host": {"type": "string"},
                 "protocol": {"type": "string", "default": "http"},
                 "port": {"type": "number"},
+                "username": {"type": "string"},
+                "password": {"type": "string"},
                 "schema": {"type": "string"},
                 "schema_filter": {
                     "type": "string",
@@ -53,8 +55,14 @@ class Presto(BaseQueryRunner):
                     "default": "RegExp to filter schema.table",
                 },
                 "catalog": {"type": "string"},
-                "username": {"type": "string"},
-                "password": {"type": "string"},
+                "extras": {
+                    "type": "object",
+                    "default": '{ "requests_kwargs": null }',
+                    "props": {
+                        "rows": 2,
+                        "extra": "Extra kwargs passed to presto.connect(...)",
+                    },
+                },
             },
             "order": [
                 "host",
@@ -66,6 +74,7 @@ class Presto(BaseQueryRunner):
                 "schema_filter",
                 "table_filter",
                 "catalog",
+                "extra",
             ],
             "required": ["host"],
         }
@@ -126,6 +135,7 @@ class Presto(BaseQueryRunner):
             password=(self.configuration.get("password") or None),
             catalog=self.configuration.get("catalog", "hive"),
             schema=self.configuration.get("schema", "default"),
+            **self.configuration.get("extras", {})
         )
 
         cursor = connection.cursor()

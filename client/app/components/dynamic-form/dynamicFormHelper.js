@@ -5,14 +5,16 @@ function orderedInputs(properties, order, targetOptions) {
   const inputs = new Array(order.length);
   Object.keys(properties).forEach(key => {
     const position = order.indexOf(key);
+    const field = properties[key];
     const input = {
       name: key,
-      title: properties[key].title,
-      type: properties[key].type,
-      placeholder: isNil(properties[key].default) ? null : properties[key].default.toString(),
-      required: properties[key].required,
-      extra: properties[key].extra,
+      title: field.title,
+      type: field.type,
+      placeholder: isNil(field.default) ? null : field.default.toString(),
+      required: field.required,
+      extra: field.extra,
       initialValue: targetOptions[key],
+      props: field.props,
     };
 
     if (input.type === "select") {
@@ -55,6 +57,10 @@ function normalizeSchema(configurationSchema) {
     if (!isEmpty(prop.extendedEnum)) {
       prop.type = "select";
       prop.options = prop.extendedEnum;
+    }
+
+    if (prop.type === "object") {
+      prop.type = "json";
     }
 
     prop.required = includes(configurationSchema.required, name);
