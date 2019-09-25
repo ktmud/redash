@@ -1,0 +1,54 @@
+@import '../../assets/less/inc/ant-variables';
+
+.vega-help-link() {
+  &, &:visited {
+    color: @redash-gray;
+  }
+  &:hover {
+    color: darken(@redash-gray, 20%);
+  }
+}
+
+.vega-spec-editor {
+  .ant-select {
+    margin-right: 10px;
+  }
+  .vega-help-link {
+    float: right;
+    .vega-help-link();
+  }
+}
+
+.widget-wrapper .vega-visualization-container .ant-alert {
+  margin: 20px;
+}
+
+.vega-canvas-container {
+  font-size: 0;  /* make sure blank space doesn't increase container height */
+  text-align: center;
+  max-height: 600px;
+  min-height: 100px;
+}
+.ant-modal-body, .modal-body {
+  .vega-canvas-container {
+    min-height: 40vh;
+  }
+}
+
+.vega-external-link {
+  text-align: center;
+  margin-top: 10px;
+  a {
+    .vega-help-link();
+  }
+}
+
+#vg-tooltip-element {
+  z-index: 2001;
+  font-size: 12px;
+  border-radius: 1px;
+  border: 0;
+  table {
+    background: transparent;
+  }
+}

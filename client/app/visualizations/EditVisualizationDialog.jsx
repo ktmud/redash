@@ -94,6 +94,8 @@ function EditVisualizationDialog({ dialog, visualization, query, queryResult }) 
 
   const [saveInProgress, setSaveInProgress] = useState(false);
 
+  const { Renderer, Editor } = registeredVisualizations[type];
+
   function onTypeChanged(newType) {
     setType(newType);
 
@@ -128,8 +130,6 @@ function EditVisualizationDialog({ dialog, visualization, query, queryResult }) 
     const optionsChanged = !isEqual(cleanAngularProps(options), defaultState.originalOptions);
     confirmDialogClose(nameChanged || optionsChanged).then(dialog.dismiss);
   }
-
-  const { Renderer, Editor } = registeredVisualizations[type];
 
   return (
     <Modal
@@ -187,11 +187,13 @@ function EditVisualizationDialog({ dialog, visualization, query, queryResult }) 
           <Filters filters={filters} onChange={setFilters} />
           <div className="scrollbox" data-test="VisualizationPreview">
             <Renderer
+              fromEditor
               data={filteredData}
               options={options}
               visualizationName={name}
               onOptionsChange={onOptionsChanged}
               context="query"
+              fromEditor
             />
           </div>
         </Grid.Col>
@@ -201,9 +203,8 @@ function EditVisualizationDialog({ dialog, visualization, query, queryResult }) 
 }
 
 EditVisualizationDialog.propTypes = {
-  dialog: DialogPropType.isRequired,
-  query: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
   visualization: VisualizationType,
+  dialog: DialogPropType.isRequired,
   queryResult: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
 };
 

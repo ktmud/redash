@@ -286,10 +286,13 @@ class QueryResultResource(BaseResource):
 
             filename = get_download_filename(query_result, query, filetype)
 
-            response.headers.add_header(
-                "Content-Disposition",
-                'attachment; filename="{}"'.format(filename.encode("utf-8"))
-            )
+            if filetype in ('csv', 'json') and request.args.get('download') in ['false', '0']:
+                response.headers.set('Content-Type', 'text/plain; charset=UTF-8')
+            else:
+                response.headers.add_header(
+                    'Content-Disposition',
+                    'attachment; filename="{}"'.format(filename.encode('utf-8'))
+                )
 
             return response
 
