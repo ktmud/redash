@@ -28,7 +28,9 @@
     "test:watch": "jest --watch",
     "cypress:install": "npm install --no-save cypress@~4.5.0 @percy/agent@0.26.2 @percy/cypress@^2.2.0 atob@2.1.2 lodash@^4.17.10 request-cookies@^1.1.0",
     "cypress": "node client/cypress/cypress.js",
-    "postinstall": "(cd viz-lib && npm ci && npm run build:babel)"
+    "postinstall": "(cd viz-lib && npm ci && npm run build:babel)",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -76,7 +78,8 @@
     "react-virtualized": "^9.21.2",
     "universal-router": "^8.3.0",
     "use-debounce": "^3.1.0",
-    "use-media": "^1.4.0"
+    "use-media": "^1.4.0",
+    "snyk": "^1.373.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.10.4",
@@ -175,5 +178,6 @@
     "and_ff >= 64",
     "and_uc >= 11.8",
     "samsung >= 6.2"
-  ]
+  ],
+  "snyk": true
 }
